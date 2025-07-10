@@ -32,4 +32,4 @@ jobs:
 
       - name: Run Flask app
         run: |
-          python app.py
+          gunicorn app:app --bind 0.0.0.0:5000
