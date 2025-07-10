@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Household Grocery App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 15px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      display: block;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .add-item-section {
+      padding: 30px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .add-item-form {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+    .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    .btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .btn-danger {
+      background: #f44336;
+    }
+    .btn-danger:hover {
+      background: #da190b;
+    }
+    .btn-secondary {
+      background: #6c757d;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .filters {
+      padding: 20px 30px;
+      background: white;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .filter-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 8px 16px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    .filter-btn.active {
+      background: #4CAF50;
+      color: white;
+      border-color: #4CAF50;
+    }
+    .filter-btn:hover {
+      border-color: #4CAF50;
+    }
+    .grocery-list,
+    .shopping-history {
+      padding: 30px;
+    }
+    .category-section {
+      margin-bottom: 30px;
+    }
+    .category-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #4CAF50;
+    }
+    .item,
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border-left: 4px solid #4CAF50;
+      transition: all 0.3s;
+    }
+    .item:hover,
+    .history-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .item.purchased {
+      opacity: 0.6;
+      border-left-color: #28a745;
+      background: #e8f5e8;
+    }
+    .item.purchased .item-name {
+      text-decoration: line-through;
+    }
+    .item-info {
+      flex: 1;
+    }
+    .item-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .item-details {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+    .item-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      transform: scale(1.2);
+    }
+    .edit-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex: 1;
+    }
+    .edit-form input,
+    .edit-form select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .empty-state img {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+    .bulk-actions {
+      padding: 20px 30px;
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+    }
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+    .btn-danger-outline {
+      background: transparent;
+      color: #dc3545;
+      border: 2px solid #dc3545;
+    }
+    .btn-danger-outline:hover {
+      background: #dc3545;
+      color: white;
+    }
+    .total-amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #4CAF50;
+      margin-bottom: 5px;
+    }
+    .total-label {
+      font-size: 1.2rem;
+      color: #333;
+      font-weight: 600;
+    }
+    .shopping-history h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .shopping-history .filter-buttons {
+      margin-bottom: 20px;
+    }
+    .history-container {
+      min-height: 200px;
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .add-item-form {
+        flex-direction: column;
+      }
+      .form-group {
+        min-width: 100%;
+      }
+      .filter-buttons {
+        justify-content: center;
+      }
+      .item,
+      .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .item-actions {
+        align-self: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛒 Grocery Manager</h1>
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-number" id="totalItems">0</span>
+          <span class="stat-label">Total Items</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="pendingItems">0</span>
+          <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="purchasedItems">0</span>
+          <span class="stat-label">Purchased</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="totalCost">₹0.00</span>
+          <span class="stat-label">Total Cost</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-item-section">
+      <div class="add-item-form">
+        <div class="form-group">
+          <label for="itemName">Item Name <span style="color: red;">*</span></label>
+          <input type="text" id="itemName" placeholder="Enter item name" required>
+        </div>
+        <div class="form-group">
+          <label for="itemQuantity">Quantity <span style="color: red;">*</span></label>
+          <input type="number" id="itemQuantity" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label for="itemUnit">Unit <span style="color: red;">*</span></label>
+          <select id="itemUnit">
+            <option value="pcs">pcs</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="L">L</option>
+            <option value="mL">mL</option>
+            <option value="dozen">dozen</option>
+            <option value="pack">pack</option>
+            <option value="can">can</option>
+            <option value="box">box</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="itemPrice">Price/Unit (₹) <span style="color: red;">*</span></label>
+          <input type="number" id="itemPrice" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label for="itemDate">Date <span style="color: red;">*</span></label>
+          <input type="date" id="itemDate">
+        </div>
+        <div class="form-group">
+          <label for="itemCategory">Category <span style="color: red;">*</span></label>
+          <select id="itemCategory">
+            <option value="Fruits">🍎 Fruits</option>
+            <option value="Vegetables">🥕 Vegetables</option>
+            <option value="Grocery">🌾 Grocery</option>
+            <option value="Dairy">🥛 Dairy</option>
+            <option value="Non-Veg">🥩 Non-Veg</option>
+            <option value="Bakery">🍞 Bakery</option>
+            <option value="Frozen">🧊 Frozen</option>
+            <option value="Beverages">🥤 Beverages</option>
+            <option value="Snacks">🍿 Snacks</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <button class="btn" onclick="addItem()">➕ Add Item</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setFilter('all')">All Items</button>
+        <button class="filter-btn" onclick="setFilter('pending')">Pending</button>
+        <button class="filter-btn" onclick="setFilter('purchased')">Purchased</button>
+        <button class="filter-btn" onclick="setFilter('Fruits')">Fruits</button>
+        <button class="filter-btn" onclick="setFilter('Vegetables')">Vegetables</button>
+        <button class="filter-btn" onclick="setFilter('Grocery')">Grocery</button>
+        <button class="filter-btn" onclick="setFilter('Dairy')">Dairy</button>
+        <button class="filter-btn" onclick="setFilter('Non-Veg')">Non-Veg</button>
+        <button class="filter-btn" onclick="setFilter('Other')">Other</button>
+      </div>
+    </div>
+
+    <div class="grocery-list" id="groceryList">
+      <div class="empty-state">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🛒</div>
+        <h3>Your grocery list is empty</h3>
+        <p>Add some items to get started!</p>
+      </div>
+    </div>
+
+    <div class="total-section" id="totalSection" style="display: none;">
+      <div class="total-label">Grand Total:</div>
+      <div class="total-amount" id="grandTotal">₹0.00</div>
+    </div>
+
+    <div class="bulk-actions" id="bulkActions" style="display: none;">
+      <button class="btn btn-warning" onclick="markAllPurchased()">✅ Mark All as Purchased</button>
+      <button class="btn btn-danger-outline" onclick="clearAll()">🗑️ Clear All Items</button>
+    </div>
+
+  </div>
+    <div class="shopping-history">
+      <h2>🛍️ Shopping History</h2>
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setHistoryFilter('all')">All Time</button>
+        <button class="filter-btn" onclick="setHistoryFilter('week')">This Week</button>
+        <button class="filter-btn" onclick="setHistoryFilter('month')">This Month</button>
+        <button class="filter-btn" onclick="setHistoryFilter('year')">This Year</button>
+      </div>
+   
+
+      <div class="history-container" id="historyContainer">
+        <div class="empty-state">
+          <img src="https://placehold.co/120x120?text=No+History" alt="Empty Shopping History" width="120" height="120">
+          <p>No shopping history yet. Start tracking your purchases!</p>
+        </div>
+      </div>
+    </div>
+	<div style="text-align: center; margin: 30px;">
+		<button class="btn" onclick="sendDataToBackend()">💾 Save to Excel</button>
+	</div>
+
+    
+
+  <script>
+    let groceryItems = [];
+    let currentFilter = 'all';
+    let editingItemId = null;
+    let historyFilter = 'all';
+
+    function addItem() {
+      const name = document.getElementById('itemName').value.trim();
+      const quantity = parseInt(document.getElementById('itemQuantity').value) || 1;
+      const unit = document.getElementById('itemUnit').value;
+      const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+      const date = document.getElementById('itemDate').value;
+      const category = document.getElementById('itemCategory').value;
+      if (name) {
+        const item = {
+          id: Date.now(),
+          name: name,
+          quantity: quantity,
+          unit: unit,
+          price: price,
+          date: date,
+          category: category,
+          purchased: false,
+          dateAdded: new Date().toLocaleDateString()
+        };
+        groceryItems.push(item);
+        // Clear form
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemQuantity').value = '1';
+        document.getElementById('itemUnit').value = 'pcs';
+        document.getElementById('itemPrice').value = '';
+        setTodaysDate();
+        document.getElementById('itemCategory').value = 'Fruits';
+        updateDisplay();
+      }
+    }
+
+    function deleteItem(id) {
+      groceryItems = groceryItems.filter(item => item.id !== id);
+      updateDisplay();
+    }
+
+    function togglePurchased(id) {
+      groceryItems = groceryItems.map(item =>
+        item.id === id ? { ...item, purchased: !item.purchased } : item
+      );
+      updateDisplay();
+    }
+
+    function startEdit(id) {
+      editingItemId = id;
+      updateDisplay();
+    }
+
+    function saveEdit(id) {
+      const nameInput = document.querySelector(`#edit-name-${id}`);
+      const quantityInput = document.querySelector(`#edit-quantity-${id}`);
+      const unitInput = document.querySelector(`#edit-unit-${id}`);
+      const priceInput = document.querySelector(`#edit-price-${id}`);
+      const dateInput = document.querySelector(`#edit-date-${id}`);
+      const categoryInput = document.querySelector(`#edit-category-${id}`);
+      groceryItems = groceryItems.map(item =>
+        item.id === id ? {
+          ...item,
+          name: nameInput.value.trim(),
+          quantity: parseInt(quantityInput.value) || 1,
+          unit: unitInput.value,
+          price: parseFloat(priceInput.value) || 0,
+          date: dateInput.value,
+          category: categoryInput.value
+        } : item
+      );
+      editingItemId = null;
+      updateDisplay();
+    }
+
+    function cancelEdit() {
+      editingItemId = null;
+      updateDisplay();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      updateDisplay();
+    }
+
+    function setHistoryFilter(filter) {
+      historyFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      updateDisplay();
+    }
+
+    function updateStats() {
+      const total = groceryItems.length;
+      const purchased = groceryItems.filter(item => item.purchased).length;
+      const pending = total - purchased;
+      const totalCost = groceryItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('totalItems').textContent = total;
+      document.getElementById('pendingItems').textContent = pending;
+      document.getElementById('purchasedItems').textContent = purchased;
+      document.getElementById('totalCost').textContent = `₹${totalCost.toFixed(2)}`;
+    }
+
+    function updateGrandTotal() {
+      const grandTotal = groceryItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('grandTotal').textContent = `₹${grandTotal.toFixed(2)}`;
+      const totalSection = document.getElementById('totalSection');
+      const bulkActions = document.getElementById('bulkActions');
+      if (groceryItems.length > 0) {
+        totalSection.style.display = 'block';
+        bulkActions.style.display = 'flex';
+      } else {
+        totalSection.style.display = 'none';
+        bulkActions.style.display = 'none';
+      }
+    }
+
+    function markAllPurchased() {
+      if (confirm('Are you sure you want to mark all items as purchased?')) {
+        groceryItems = groceryItems.map(item => ({ ...item, purchased: true }));
+        updateDisplay();
+      }
+    }
+
+    function clearAll() {
+      if (confirm('Are you sure you want to clear all items? This action cannot be undone.')) {
+      groceryItems = groceryItems.filter(item => item.purchased);
+      updateDisplay();
+      }
+    }
+
+    function setTodaysDate() {
+      const today = new Date();
+      const todayFormatted = today.toISOString().split('T')[0];
+      document.getElementById('itemDate').value = todayFormatted;
+    }
+
+    function filterPurchasedItems(filter) {
+      const today = new Date();
+      const purchasedItems = groceryItems.filter(item => item.purchased);
+
+      switch (filter) {
+        case 'week':
+          const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+          return purchasedItems.filter(item => new Date(item.date) >= weekStart);
+        case 'month':
+          const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+          return purchasedItems.filter(item => new Date(item.date) >= monthStart);
+        case 'year':
+          const yearStart = new Date(today.getFullYear(), 0, 1);
+          return purchasedItems.filter(item => new Date(item.date) >= yearStart);
+        default:
+          return purchasedItems; // All Time
+      }
+    }
+
+    function updateDisplay() {
+      updateStats();
+      updateGrandTotal();
+
+      const filteredItems = groceryItems.filter(item => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'pending') return !item.purchased;
+        if (currentFilter === 'purchased') return item.purchased;
+        return item.category === currentFilter;
+      });
+
+      const groceryList = document.getElementById('groceryList');
+      if (filteredItems.length === 0) {
+        groceryList.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🛒</div>
+            <h3>No items found</h3>
+            <p>Try adjusting your filter or add some items!</p>
+          </div>
+        `;
+      } else {
+        const groupedItems = filteredItems.reduce((acc, item) => {
+          if (!acc[item.category]) acc[item.category] = [];
+          acc[item.category].push(item);
+          return acc;
+        }, {});
+        let html = '';
+        Object.keys(groupedItems).forEach(category => {
+          html += `<div class="category-section"><h3 class="category-title">${category}</h3>`;
+          groupedItems[category].forEach(item => {
+            if (editingItemId === item.id) {
+              html += `
+                <div class="item">
+                  <div class="edit-form">
+                    <input type="text" id="edit-name-${item.id}" value="${item.name}">
+                    <input type="number" id="edit-quantity-${item.id}" value="${item.quantity}" min="1">
+                    <select id="edit-unit-${item.id}">
+                      <option value="pcs" ${item.unit === 'pcs' ? 'selected' : ''}>pcs</option>
+                      <option value="kg" ${item.unit === 'kg' ? 'selected' : ''}>kg</option>
+                      <option value="g" ${item.unit === 'g' ? 'selected' : ''}>g</option>
+                      <option value="L" ${item.unit === 'L' ? 'selected' : ''}>L</option>
+                      <option value="mL" ${item.unit === 'mL' ? 'selected' : ''}>mL</option>
+                      <option value="dozen" ${item.unit === 'dozen' ? 'selected' : ''}>dozen</option>
+                      <option value="pack" ${item.unit === 'pack' ? 'selected' : ''}>pack</option>
+                      <option value="can" ${item.unit === 'can' ? 'selected' : ''}>can</option>
+                      <option value="box" ${item.unit === 'box' ? 'selected' : ''}>box</option>
+                    </select>
+                    <input type="date" id="edit-date-${item.id}" value="${item.date}">
+                    <select id="edit-category-${item.id}">
+                      <option value="Fruits" ${item.category === 'Fruits' ? 'selected' : ''}>🍎 Fruits</option>
+                      <option value="Vegetables" ${item.category === 'Vegetables' ? 'selected' : ''}>🥕 Vegetables</option>
+                      <option value="Grocery" ${item.category === 'Grocery' ? 'selected' : ''}>🌾 Grocery</option>
+                      <option value="Dairy" ${item.category === 'Dairy' ? 'selected' : ''}>🥛 Dairy</option>
+                      <option value="Non-Veg" ${item.category === 'Non-Veg' ? 'selected' : ''}>🥩 Non-Veg</option>
+                      <option value="Bakery" ${item.category === 'Bakery' ? 'selected' : ''}>🍞 Bakery</option>
+                      <option value="Frozen" ${item.category === 'Frozen' ? 'selected' : ''}>🧊 Frozen</option>
+                      <option value="Beverages" ${item.category === 'Beverages' ? 'selected' : ''}>🥤 Beverages</option>
+                      <option value="Snacks" ${item.category === 'Snacks' ? 'selected' : ''}>🍿 Snacks</option>
+                      <option value="Other" ${item.category === 'Other' ? 'selected' : ''}>📦 Other</option>
+                    </select>
+                  </div>
+                  <div class="item-actions">
+                    <button class="btn btn-small" onclick="saveEdit(${item.id})">💾 Save</button>
+                    <button class="btn btn-small btn-secondary" onclick="cancelEdit()">❌ Cancel</button>
+                  </div>
+                </div>`;
+            } else {
+              const totalItemCost = (item.price * item.quantity).toFixed(2);
+              html += `
+                <div class="item ${item.purchased ? 'purchased' : ''}">
+                  <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-details">
+                      Quantity: ${item.quantity} ${item.unit} • 
+                      Price: ₹${item.price.toFixed(2)}/${item.unit} • 
+                      Total: ₹${totalItemCost} • 
+                      Added: ${item.dateAdded}
+                      ${item.date ? ` • Date: ${item.date}` : ''}
+                    </div>
+                  </div>
+                  <div class="item-actions">
+                    <input type="checkbox" class="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${item.id})" title="Mark as purchased">
+                    <button class="btn btn-small btn-secondary" onclick="startEdit(${item.id})" title="Edit item">✏️</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteItem(${item.id})" title="Delete item">🗑️</button>
+                  </div>
+                </div>`;
+            }
+          });
+          html += `</div>`;
+        });
+        groceryList.innerHTML = html;
+      }
+
+      // Update Shopping History
+      const historyItems = filterPurchasedItems(historyFilter);
+      const historyContainer = document.getElementById('historyContainer');
+      if (historyItems.length === 0) {
+        historyContainer.innerHTML = `
+          <div class="empty-state">
+            <img src=" https://placehold.co/120x120?text=No+History" alt="Empty Shopping History" width="120" height="120">
+            <p>No shopping history yet. Start tracking your purchases!</p>
+          </div>
+        `;
+      } else {
+        let html = '';
+        historyItems.forEach(item => {
+          const totalItemCost = (item.price * item.quantity).toFixed(2);
+          html += `
+            <div class="history-item">
+              <div class="item-info">
+                <div class="item-name">${item.name}</div>
+                <div class="item-details">
+                  Quantity: ${item.quantity} ${item.unit} • 
+                  Price: ₹${item.price.toFixed(2)}/${item.unit} • 
+                  Total: ₹${totalItemCost} • 
+                  Date: ${item.date}
+                </div>
+              </div>
+            </div>`;
+        });
+        historyContainer.innerHTML = html;
+      }
+    }
+
+    document.getElementById('itemName').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        addItem();
+      }
+    });
+
+    setTodaysDate();
+    updateDisplay();
+
+function exportHistory() {
+  const data = filterPurchasedItems(historyFilter).map(item => ({
+    Name: item.name,
+    Quantity: `${item.quantity} ${item.unit}`,
+    PricePerUnit: item.price,
+    Total: item.price * item.quantity,
+    Date: item.date,
+    Category: item.category
+  }));
+
+  if (data.length === 0) {
+    alert("No purchased items to export.");
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Shopping History");
+
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(workbook, `Shopping_History_${today}.xlsx`);
+}
+
+function sendDataToBackend() {
+  const purchasedItems = groceryItems.filter(item => item.purchased);
+
+  fetch('/export', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(purchasedItems)
+  })
+  .then(response => {
+    if (response.ok) {
+      return response.blob();
+    }
+    throw new Error('Failed to export');
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `Shopping_History_${today}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  })
+  .catch(error => {
+    alert('Error exporting: ' + error.message);
+  });
+}
+window.onload = () => {
+  setTodaysDate();
+};
+
+
+  </script>
+<footer style="text-align: center; padding: 20px;  margin-top: 30px; font-weight: bold;">
+  © Copyright under Jyoti Prakash Mishra
+</footer>
+
+</body>
+</html>
